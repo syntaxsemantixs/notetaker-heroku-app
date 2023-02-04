@@ -1,6 +1,7 @@
 const notes = require('express').Router();
-const { readFromFile, readAndAppend, readAndRemove } = require('../helpers/fsUtils');
+const { readFromFile, readAndAppend, readAndRemove, } = require('../helpers/fsUtils');
 const uuid = require('../helpers/uuid');
+const fs = require("fs");
 
 // Route to get the list of notes
 notes.get('/', (req, res) =>
@@ -33,19 +34,33 @@ notes.post('/', (req, res) =>
 // Route to delete notes using query params to specify based on uuid
 notes.delete('/:id', (req, res) =>
 {
-  const requestedID = req.params.id;
+  fs.readFile("db/db.json", (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      const parsedData = JSON.parse(data);
+      console.log(parsedData)
+      let notes = parsedData.filter(note => note.id != req.params.id);
+      console.log(parsedData)
+      fs.writeFile("db/db.json", JSON.stringify(notes), err => err ? console.log(err) : res.redirect("/notes") );
+    }
+  });
+  // const requestedID = req.params.id;
+  // console.log(req.params)
 
-  // Filter notes based on uuid and remove from list
-  if (requestedID)
-  {
-    readAndRemove(requestedID, 'db/db.json');
+  // // Filter notes based on uuid and remove from list
+  // if (requestedID)
+  // {
+  //   readAndRemove(requestedID, 'db/db.json');
 
-    response = { status: 'Successfully Deleted' }
-    res.status(201).json(response);
-  } else
-  {
-    res.status(400).json('Bad request');
-  }
+  //   response = { status: 'Successfully Deleted' }
+  //   res.status(201).json(response);
+  // } else
+  // {
+  //   res.status(400).json('Bad request');
+  // }
 });
+
+
 
 module.exports = notes;
